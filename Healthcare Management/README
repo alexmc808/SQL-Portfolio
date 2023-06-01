@@ -20,8 +20,9 @@ doctor_id (primary key)
 first_name
 last_name
 specialization
-address
+hospital_address
 phone_number
+hospital_name
 
 Appointments Table:
 appointment_id (primary key)
