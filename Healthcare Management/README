@@ -1,0 +1,51 @@
+### READ ME
+
+Project Description:
+You are tasked with creating an SQL database to manage healthcare information. The database should store information about patients, doctors, medical appointments, and medical conditions. 
+The project requires designing the database schema, creating the necessary tables, and implementing some sample queries.
+
+Database Schema:
+
+Patients Table:
+patient_id (primary key)
+first_name
+last_name
+date_of_birth
+gender
+address
+phone_number
+
+Doctors Table:
+doctor_id (primary key)
+first_name
+last_name
+specialization
+address
+phone_number
+
+Appointments Table:
+appointment_id (primary key)
+patient_id (foreign key referencing patient_id in Patients table)
+doctor_id (foreign key referencing doctor_id in Doctors table)
+appointment_date
+appointment_time
+
+Medical Conditions Table:
+condition_id (primary key)
+patient_id (foreign key referencing patient_id in Patients table)
+condition_name
+diagnosis_date
+medication
+
+Instructions:
+Create an SQL database called "healthcare_management".
+Write SQL queries to create the necessary tables based on the provided schema.
+Insert sample data into the tables to test the functionality.
+Implement the following queries:
+Retrieve all patients' information.
+Retrieve all doctors' information.
+Retrieve all appointments for a specific doctor.
+Retrieve all medical conditions for a specific patient.
+Retrieve all appointments for a specific patient.
+Update a doctor's phone number based on their ID.
+Delete a patient and all their associated appointments and medical conditions based on their ID.
