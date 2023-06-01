@@ -1,0 +1,138 @@
+-- Create patients, doctors, medical appointments, and medical conditions tables
+
+CREATE TABLE healthcare_management.patients (
+	patient_id INT PRIMARY KEY,
+    first_name VARCHAR(30),
+    last_name VARCHAR(50),
+    date_of_birth DATE,
+    gender VARCHAR(30),
+    street_address VARCHAR(100),
+    city VARCHAR(50),
+    state VARCHAR(50),
+    postal_code VARCHAR(20),
+    country VARCHAR(30),
+    phone_number VARCHAR(20)
+    );
+
+CREATE TABLE healthcare_management.doctors (
+	doctor_id INT PRIMARY KEY,
+	first_name VARCHAR(30),
+    last_name VARCHAR(50),
+    specialization VARCHAR(30),
+	hospital_address VARCHAR(100),
+    city VARCHAR(50),
+    state VARCHAR(50),
+    postal_code VARCHAR(50),
+    country VARCHAR(50),
+    phone_number VARCHAR(20)
+    );
+
+CREATE TABLE healthcare_management.appointments (
+	appointment_id INT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    appointment_date DATE,
+    appointment_time TIME,
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id)
+    );
+
+CREATE TABLE healthcare_management.medical_conditions (
+	condition_id INT PRIMARY KEY,
+    patient_id INT,
+    condition_name VARCHAR(50),
+    diagnosis_date DATE,
+    medication VARCHAR(50),
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+    );
+
+-- Insert sample dadta into the tables to ensure their functionality.
+
+INSERT INTO patients
+	VALUES (1, 'Phoebe', 'Buffay', '1966-02-16', 'female', '5 Morton St. Apt 14', 'New York', 'New York', 'USA', '10041', '212-555-0129'),
+		   (2, 'Monica', 'Geller', '1969-03-03', 'female', '425 Grove St. Apt 20', 'New York', 'New York', 'USA', '10041', '212-555-0111'),
+		   (3, 'Rachel', 'Green', '1970-05-05', 'female', '425 Grove St. Apt 20', 'New York', 'New York', 'USA', '10041', '212-555-0167');
+
+INSERT INTO doctors
+	VALUES (1, 'Meredith', 'Grey', 'General Surgeon', '15000 Centennial Drive', 'Seattle', 'Washington', 'USA', '98109', '206-555-6000'),
+           (2, 'Amelia', 'Shepherd', 'Neurosurgery', '15000 Centennial Drive', 'Seattle', 'Washington', 'USA', '98109', '206-555-6000'),
+		   (3, 'Michelle', 'Lin', 'Plastic Surgery/ENT', '15000 Centennial Drive', 'Seattle', 'Washington', 'USA', '98109', '206-555-6000');
+
+-- Alter doctors table to also include hospital name
+
+ALTER TABLE doctors
+	ADD COLUMN hospital_name TEXT;
+
+UPDATE doctors
+SET hospital_name = 'Grey Sloan Memorial Hospital'
+WHERE doctor_id IN (1, 2, 3);
+
+INSERT INTO appointments
+	VALUES (1, 1, 1, '2023-06-01', '12:00:00'),
+		   (2, 3, 3, '2023-08-05', '8:30:00'),
+           (3, 1, 2, '2023-09-23', '11:00:00');
+
+INSERT INTO appointments
+	VALUES (4, 2, 1, '2023-06-01', '08:00:00');
+
+INSERT INTO medical_conditions
+	VALUES (1, 1, 'Traumatic Brain Injury', '2023-04-17', 'Acetaminophen'),
+           (2, 2, 'Appendicitis', '2023-05-31', 'Ceftriaxone'),
+           (3, 3, 'Carpal Tunnel Syndrome', '2022-10-27', 'Gabapentin'); 
+           
+-- Write queries to retrieve certain information 
+
+-- Retrieve all patients' info
+SELECT * 
+FROM patients;
+
+-- Retrieve all doctors' info
+SELECT *
+FROM doctors;
+
+-- Retrieve all appointments for specific doctor
+SELECT ap.appointment_id, ap.patient_id, ap.doctor_id,
+	ap.appointment_date, ap.appointment_time,
+    do.first_name, do.last_name
+FROM appointments AS ap
+JOIN doctors AS do
+	ON ap.doctor_id = do.doctor_id
+WHERE do.doctor_id = 1; -- For Dr. Meredith Grey
+
+-- Retrieve all medical conditions for a specific patient
+SELECT *
+FROM medical_conditions
+JOIN patients
+	ON medical_conditions.patient_id = patients.patient_id
+WHERE medical_conditions.patient_id = 2; -- For patient Monica Geller
+
+-- Retrieve all appointments for a specific patient
+SELECT ap.appointment_id, ap.appointment_date, ap.appointment_time,
+	pa.patient_id, pa.first_name, pa.last_name, pa.date_of_birth,
+    pa.gender, pa.phone_number, mc.condition_name, mc.diagnosis_date, 
+    mc.medication
+FROM appointments ap
+JOIN patients pa
+	ON ap.patient_id = pa.patient_id
+JOIN medical_conditions mc
+	ON pa.patient_id = mc.patient_id
+WHERE ap.patient_id = 1; -- For patient Phoebe Buffay
+
+-- Update a doctor's hospital info and phone number using doctor_id
+UPDATE doctors
+SET street_address = '201 W. Center St.',
+	city = 'Rochester',
+	state = 'Minnesota',
+	postal_code = '55902',
+	phone_number = '507-266-7890'
+WHERE doctor_id = 3; -- Updated info for Dr. Michelle Lin
+
+-- Delete a patient and all their appointments and medical conditions using patient_id
+DELETE FROM patients
+WHERE patient_id = 3;
+
+DELETE FROM appointments
+WHERE patient_id = 3;
+
+DELETE FROM medical_conditions
+WHERE patient_id = 3;
