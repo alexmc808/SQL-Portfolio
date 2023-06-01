@@ -1,2 +1,2 @@
 # SQL-Portfolio
-Files associated with SQL projects.
+Files associated with various SQL projects I have completed.
