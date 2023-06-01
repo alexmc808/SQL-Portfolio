@@ -1,0 +1,153 @@
+-- QUIZ FUNNEL --
+
+-- #1. View first 10 rows of Style Quiz survey, which is in a table called 'survey'.
+
+SELECT *
+FROM survey
+LIMIT 10;
+-- Columns in table: question, user_id, response
+
+-- #2. Analyze how many users move from Q1 to Q2, etc.
+
+SELECT question,
+  COUNT(DISTINCT user_id) AS 'num_users'
+FROM survey
+GROUP BY 1;
+-- Q1: 500 responses, Q2: 475 responses, Q3: 380 responses, Q4: 361 responses, Q5: 270 responses
+
+-- #3. Calculate percentage of users who answered each question. Which question(s) have lower completion rates? What do you think the reason is?
+
+-- Q1: 100% of users, Q2: 95% of users, Q3: 80% of users, Q4: 95% of users, Q5: 75% of users. Questions 3 and 5 have the lowest completion rates. Question 3 is "which shapes do you like?" and question 5 is "when was your last eye exam?" I think question 3 has a lower completion rate because it is hard to decide what shapes you like just from looking at them but not being able to try them on yourself. Question 5 may have a lower completion rate because it involves giving out medical information, which users may not feel comfortable sharing. 
+
+-- HOME TRY-ON FUNNEL --
+
+-- #4. Examine first 5 rows of each table in funnel: quiz, home_try_on, and purchase.
+
+SELECT *
+FROM quiz
+LIMIT 5;
+-- Columns in table: user_id, style, fit, shape, color
+
+SELECT *
+FROM home_try_on
+LIMIT 5;
+-- Columns in table: user_id, number_of_pairs, address
+
+SELECT *
+FROM purchase
+LIMIT 5;
+-- Columns in table: user_id, product_id, style, model_name, color, price
+
+-- #5. Use a left join to combine the three tables. Select only the first 10 rows from the resulting table.
+
+SELECT DISTINCT quiz.user_id,
+  home_try_on.user_id IS NOT NULL AS 'is_home_try_on',
+  home_try_on.number_of_pairs,
+  purchase.user_id IS NOT NULL AS 'is_purchase'
+FROM quiz
+LEFT JOIN home_try_on
+  ON quiz.user_id = home_try_on.user_id
+LEFT JOIN purchase
+  ON home_try_on.user_id = purchase.user_id
+LIMIT 10;
+
+-- #6. Analyze funnel to make actionable insights for Warby Parker.
+
+--Calculte overall conversion rates by aggregating across all rows. Compare conversion from quiz --> home_try_on and home_try_on --> purchase.
+
+WITH funnel AS (
+  SELECT DISTINCT quiz.user_id,
+    home_try_on.user_id IS NOT NULL AS 'is_home_try_on',
+    home_try_on.number_of_pairs,
+    purchase.user_id IS NOT NULL AS 'is_purchase'
+  FROM quiz
+  LEFT JOIN home_try_on
+    ON quiz.user_id = home_try_on.user_id
+  LEFT JOIN purchase
+    ON home_try_on.user_id = purchase.user_id)
+SELECT COUNT(user_id) AS 'num_quiz',
+  SUM(is_home_try_on) AS 'num_is_home_try_on',
+  SUM(is_purchase) AS 'num_purchase',
+  1.0 * SUM(is_home_try_on) / COUNT(user_id) AS 'quiz_to_home_try_on',
+  1.0 * SUM(is_purchase) / SUM(is_home_try_on) AS 'home_try_on_to_purchase'
+FROM funnel;
+-- 1000 users completed the quiz, 750 users did the home try on, and 495 users made a purchase. Therefore, 75% of the users that completed the quiz did a home try on and 66% of the users who did the home try on purchased glasses.
+
+-- Calculate difference in purchase rates between customers who had 3 number_of_pairs and 5 number_of_pairs.
+
+SELECT COUNT(DISTINCT 
+    CASE
+      WHEN number_of_pairs = '3 pairs' THEN user_id
+    END) AS 'num_3_pairs',
+  COUNT(DISTINCT 
+    CASE
+      WHEN number_of_pairs = '5 pairs' THEN user_id
+    END) AS 'num_5_pairs'
+FROM home_try_on;
+-- Out of 750 users who did the at home try on, 379 users got 3 pairs of glasses and 371 users got 5 pairs of glasses.
+
+WITH funnel AS (
+  SELECT DISTINCT quiz.user_id,
+    home_try_on.user_id IS NOT NULL AS 'is_home_try_on',
+    home_try_on.number_of_pairs,
+    purchase.user_id IS NOT NULL AS 'is_purchase'
+  FROM quiz
+  LEFT JOIN home_try_on
+    ON quiz.user_id = home_try_on.user_id
+  LEFT JOIN purchase
+    ON home_try_on.user_id = purchase.user_id)
+SELECT number_of_pairs,
+  SUM(is_purchase) AS 'num_purchase',
+  1.0 * SUM(is_purchase) / COUNT(number_of_pairs) AS 'perc_purchase'
+FROM funnel
+WHERE number_of_pairs IS NOT NULL
+GROUP BY 1;
+-- 53% of users who received 3 pairs to try on at home purchased glasses whereas  79% of users who received 5 pairs to try on at home purchased glasses. This infers that receiving more glasses to try on at home is better.
+
+-- Find the most common results of the style quiz.
+
+SELECT question,
+  response,
+  COUNT(*) AS 'num_users'
+FROM survey
+GROUP BY 1, 2
+ORDER BY 1, 3 DESC;
+-- Most common results: Q1 - Men's Styles, Q2: Narrow, Q3: Rectangular, Q4: Tortoise, Q5: <1 Year.
+
+-- Find the most common types of purchases made.
+
+-- Styles:
+SELECT style,
+  COUNT(*) AS 'num_sold'
+FROM purchase
+GROUP BY 1
+ORDER BY 2 DESC;
+-- 252 Women's Styles sold, 251 Men's Styles sold.
+
+-- Models:
+SELECT style,
+  model_name,
+  COUNT(*) AS 'num_sold'
+FROM purchase
+GROUP BY 2
+ORDER BY 1, 3 DESC;
+-- 116 Eugene Narrow, 107 Dawes, 95 Brady, 86 Lucy, 50 Olive, and 41 Monocle models sold.
+
+-- Colors:
+SELECT style, 
+  color,
+  COUNT(*) AS 'num_sold'
+FROM purchase
+GROUP BY 2
+ORDER BY 1, 3 DESC;
+-- 86 Jet Black, 63 Driftwood Fade, 62 Rosewood Tortoise, 54 Rose Crystal, 52 Layered Tortoise Matte, 50 Pearled Tortoise, 44 Elderflower Crystal, 43 Sea Glass Gray, 41 Endangered Tortoise colors sold. 
+
+-- Model and color combo:
+SELECT style,
+	model_name,
+	color,
+COUNT(color) AS 'num_sold'
+FROM purchase
+	GROUP BY 2, 3
+	ORDER BY 1, 4 DESC;
+-- Most popular model and color combo for men: Dawes Driftwood Fade (63 sold). Most popular model and color combo for women: Eugene Narrow Rosewood Tortoise (62 sold).
